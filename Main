@@ -1,0 +1,1232 @@
+;  This program is a compression program, it will read the inFile and based on what's in the inFile it
+;will create an appropriate frequency table which will be used to create a Huffman tree. The tree will
+;be used to translate what's in the inFile to the Outfile as binary code. This version is the visual version
+;of the compression program which will display the upkid and downkid so that one can manually create the tables
+;and tree on paper and decode what the binary code says. 
+
+;Most chunks of program are broken by what they do, if there is any confusion one should look to the right side of the file
+;it will give the purpose of that part of the program.
+
+; Sebastian Grygorczuk
+; sgrygor000@citymail.cuny.edu
+
+.MODEL TINY
+.486
+.DATA
+						;Data
+inName db 128 dup(0),0
+inHandle	dw 0
+outName db 128 dup(0),0
+outHandle dw 0
+string db 5 dup(0)
+frequency db 512 dup (0), 0
+upkid db 512 dup (0), 0
+downkid db 512 dup (0), 0
+parent db 512 dup (0), 0
+buffer 	dw 0
+sizecount dw 0
+min	dw 0
+min2	dw 0
+safespot 	dw 0
+safespot2 	dw 0
+kidcount 	dw 256
+root		dw 0
+rootplacesave	dw 0
+branch		dw 0
+branchsave	dw 0
+stringsave	db 256 dup (2),0  
+stringcount	dw 0
+stringinverse	db 256 dup (2),0
+stringsavespace dw 0
+
+
+
+.CODE
+.STARTUP
+	
+	mov si,81h
+						;inputing inName
+	innamein:
+		lodsb
+		cmp 	al,13
+		je 	error
+		cmp	al, ' '
+		jbe 	innamein
+
+		mov di,offset inName
+
+	innamein2:
+		
+		stosb
+		lodsb
+		cmp al, ' '
+		ja innamein2
+
+						;inputing outName
+	outnamein:
+		lodsb
+		cmp 	al,13
+		je 	error
+		cmp	al, ' '
+		jbe 	outnamein
+
+		mov di,offset outName
+
+	outnamein2:
+		
+		stosb
+		lodsb
+		cmp al, ' '
+		ja outnamein2
+
+						; open file
+	mov	ax,3d02h
+	lea	dx,inName
+	int	21h
+	jc	error
+	mov	inHandle,ax
+
+						; create file
+	mov	ah,3ch
+	mov	cx,1
+	lea	dx,outName	
+	int	21h
+	jc	error
+	mov	outHandle,ax	
+
+						;Create a frequency table, I've tried to make it a loop but everything I 
+						;tired failed so I decided to brute force my way through this part of the project.
+						;This only counts the first 128 possible characters.
+
+	frequencygrab:
+		mov  	ah, 3fh          
+ 	 	mov  	bx, inHandle
+ 		mov 	cx, 1           
+ 		mov 	dx,offset buffer 
+ 	 	int 	21h 	
+		cmp al,0
+		je done
+
+		cmp buffer, 0
+		je n0
+		jmp bump0
+			n0:
+			inc frequency[0]	
+		bump0:
+		cmp buffer,1
+		je n1
+		jmp bump1
+			n1:
+			inc frequency[1]	
+		bump1:
+		cmp buffer, 2
+		je n2
+		jmp bump2
+			n2:
+			inc frequency[2]	
+		bump2:
+		cmp buffer,3
+		je n3
+		jmp bump3
+			n3:
+			inc frequency[3]	
+		bump3:
+		cmp buffer, 4
+		je n4
+		jmp bump4
+			n4:
+			inc frequency[4]	
+		bump4:
+		cmp buffer,5
+		je n5
+		jmp bump5
+			n5:
+			inc frequency[5]	
+		bump5:
+		cmp buffer, 6
+		je n6
+		jmp bump6
+			n6:
+			inc frequency[6]	
+		bump6:
+		cmp buffer,7
+		je n7
+		jmp bump7
+			n7:
+			inc frequency[7]	
+		bump7:
+		cmp buffer, 8
+		je n8
+		jmp bump8
+			n8:
+			inc frequency[8]	
+		bump8:
+		cmp buffer,9
+		je n9
+		jmp bump9
+			n9:
+			inc frequency[9]	
+		bump9:
+		cmp buffer,10
+		je n10
+		jmp bump10
+			n10:
+			inc frequency[10]	
+		bump10:
+		cmp buffer,11
+		je n11
+		jmp bump11
+			n11:
+			inc frequency[11]	
+		bump11:
+		cmp buffer, 12
+		je n12
+		jmp bump12
+			n12:
+			inc frequency[12]	
+		bump12:
+		cmp buffer,13
+		je n13
+		jmp bump13
+			n13:
+			inc frequency[13]	
+		bump13:
+		cmp buffer, 14
+		je n14
+		jmp bump14
+			n14:
+			inc frequency[14]	
+		bump14:
+		cmp buffer,15
+		je n15
+		jmp bump15
+			n15:
+			inc frequency[15]	
+		bump15:
+		cmp buffer, 16
+		je n16
+		jmp bump16
+			n16:
+			inc frequency[16]	
+		bump16:
+		cmp buffer,17
+		je n17
+		jmp bump17
+			n17:
+			inc frequency[17]	
+		bump17:
+		cmp buffer, 18
+		je n18
+		jmp bump18
+			n18:
+			inc frequency[18]	
+		bump18:
+		cmp buffer,19
+		je n19
+		jmp bump19
+			n19:
+			inc frequency[19]	
+		bump19:
+		cmp buffer, 20
+		je n20
+		jmp bump20
+			n20:
+			inc frequency[20]	
+		bump20:
+		cmp buffer,21
+		je n21
+		jmp bump21
+			n21:
+			inc frequency[21]	
+		bump21:
+		cmp buffer, 22
+		je n22
+		jmp bump22
+			n22:
+			inc frequency[22]	
+		bump22:
+		cmp buffer,23
+		je n23
+		jmp bump23
+			n23:
+			inc frequency[23]		
+		bump23:
+		cmp buffer,24
+		je n24
+		jmp bump24
+			n24:
+			inc frequency[24]	
+		bump24:
+		cmp buffer,25
+		je n25
+		jmp bump25
+			n25:
+			inc frequency[25]	
+		bump25:
+		cmp buffer, 26
+		je n26
+		jmp bump26
+			n26:
+			inc frequency[26]	
+		bump26:
+		cmp buffer, 27
+		je n27
+		jmp bump27
+			n27:
+			inc frequency[27]	
+		bump27:
+		cmp buffer,28
+		je n28
+		jmp bump28
+			n28:
+			inc frequency[28]	
+		bump28:
+		cmp buffer,29
+		je n29
+		jmp bump29
+			n29:
+			inc frequency[29]	
+		bump29:
+			cmp buffer, 30
+		je n30
+		jmp bump30
+			n30:
+			inc frequency[30]	
+		bump30:
+		cmp buffer,31
+		je n31
+		jmp bump31
+			n31:
+			inc frequency[31]	
+		bump31:
+		cmp buffer, 32
+		je n32
+		jmp bump32
+			n32:
+			inc frequency[32]	
+		bump32:
+		cmp buffer,33
+		je n33
+		jmp bump33
+			n33:
+			inc frequency[33]	
+		bump33:
+		cmp buffer, 34
+		je n34
+		jmp bump34
+			n34:
+			inc frequency[34]	
+		bump34:
+		cmp buffer,35
+		je n35
+		jmp bump35
+			n35:
+			inc frequency[35]	
+		bump35:
+		cmp buffer, 36
+		je n36
+		jmp bump36
+			n36:
+			inc frequency[36]	
+		bump36:
+		cmp buffer,37
+		je n37
+		jmp bump37
+			n37:
+			inc frequency[37]	
+		bump37:
+		cmp buffer, 38
+		je n38
+		jmp bump38
+			n38:
+			inc frequency[38]	
+		bump38:
+		cmp buffer,39
+		je n39
+		jmp bump39
+			n39:
+			inc frequency[39]	
+		bump39:
+		cmp buffer, 40
+		je n40
+		jmp bump40
+			n40:
+			inc frequency[40]	
+		bump40:
+		cmp buffer,41
+		je n41
+		jmp bump41
+			n41:
+			inc frequency[41]	
+		bump41:
+		cmp buffer,42
+		je n42
+		jmp bump42
+			n42:
+			inc frequency[42]	
+		bump42:
+		cmp buffer,43
+		je n43
+		jmp bump43
+			n43:
+			inc frequency[43]	
+		bump43:
+		cmp buffer, 44
+		je n44
+		jmp bump44
+			n44:
+			inc frequency[44]	
+		bump44:
+		cmp buffer,45
+		je n45
+		jmp bump45
+			n45:
+			inc frequency[45]	
+		bump45:
+		cmp buffer, 46
+		je n46
+		jmp bump46
+			n46:
+			inc frequency[46]	
+		bump46:
+		cmp buffer,47
+		je n47
+		jmp bump47
+			n47:
+			inc frequency[47]	
+		bump47:
+		cmp buffer, 48
+		je n48
+		jmp bump48
+			n48:
+			inc frequency[48]	
+		bump48:
+		cmp buffer,49
+		je n49
+		jmp bump49
+			n49:
+			inc frequency[49]	
+		bump49:
+		cmp buffer, 50
+		je n50
+		jmp bump50
+			n50:
+			inc frequency[50]	
+		bump50:
+		cmp buffer,51
+		je n51
+		jmp bump51
+			n51:
+			inc frequency[51]	
+		bump51:
+		cmp buffer, 52
+		je n52
+		jmp bump52
+			n52:
+			inc frequency[52]	
+		bump52:
+		cmp buffer,53
+		je n53
+		jmp bump53
+			n53:
+			inc frequency[53]	
+		bump53:
+		cmp buffer, 54
+		je n54
+		jmp bump54
+			n54:
+			inc frequency[54]	
+		bump54:
+		cmp buffer,55
+		je n55
+		jmp bump55
+			n55:
+			inc frequency[55]		
+		bump55:
+		cmp buffer,56
+		je n56
+		jmp bump56
+			n56:
+			inc frequency[56]	
+		bump56:
+		cmp buffer,57
+		je n57
+		jmp bump57
+			n57:
+			inc frequency[57]	
+		bump57:
+		cmp buffer, 58
+		je n58
+		jmp bump58
+			n58:
+			inc frequency[58]	
+		bump58:
+		cmp buffer, 59
+		je n59
+		jmp bump59
+			n59:
+			inc frequency[59]	
+		bump59:
+		cmp buffer,60
+		je n60
+		jmp bump60
+			n60:
+			inc frequency[60]	
+		bump60:
+		cmp buffer,61
+		je n61
+		jmp bump61
+			n61:
+			inc frequency[61]	
+		bump61:
+			cmp buffer, 62
+		je n62
+		jmp bump62
+			n62:
+			inc frequency[62]	
+		bump62:
+		cmp buffer,63
+		je n63
+		jmp bump63
+			n63:
+			inc frequency[63]	
+		bump63:
+		cmp buffer, 64
+		je n64
+		jmp bump64
+			n64:
+			inc frequency[64]	
+		bump64:		
+		cmp buffer,65
+		je n65
+		jmp bump65
+			n65:
+			inc frequency[65]	
+		bump65:
+		cmp buffer, 66
+		je n66
+		jmp bump66
+			n66:
+			inc frequency[66]	
+		bump66:
+		cmp buffer,67
+		je n67
+		jmp bump67
+			n67:
+			inc frequency[67]	
+		bump67:
+		cmp buffer, 68
+		je n68
+		jmp bump68
+			n68:
+			inc frequency[68]	
+		bump68:
+		cmp buffer,69
+		je n69
+		jmp bump69
+			n69:
+			inc frequency[69]	
+		bump69:
+		cmp buffer, 70
+		je n70
+		jmp bump70
+			n70:
+			inc frequency[70]	
+		bump70:
+		cmp buffer,71
+		je n71
+		jmp bump71
+			n71:
+			inc frequency[71]	
+		bump71:
+		cmp buffer, 72
+		je n72
+		jmp bump72
+			n72:
+			inc frequency[72]	
+		bump72:
+		cmp buffer,73
+		je n73
+		jmp bump73
+			n73:
+			inc frequency[73]	
+		bump73:
+		cmp buffer,74
+		je n74
+		jmp bump74
+			n74:
+			inc frequency[74]	
+		bump74:
+		cmp buffer,75
+		je n75
+		jmp bump75
+			n75:
+			inc frequency[75]	
+		bump75:
+		cmp buffer, 76
+		je n76
+		jmp bump76
+			n76:
+			inc frequency[76]	
+		bump76:
+		cmp buffer,77
+		je n77
+		jmp bump77
+			n77:
+			inc frequency[77]	
+		bump77:
+		cmp buffer, 78
+		je n78
+		jmp bump78
+			n78:
+			inc frequency[78]	
+		bump78:
+		cmp buffer,79
+		je n79
+		jmp bump79
+			n79:
+			inc frequency[79]	
+		bump79:
+		cmp buffer, 80
+		je n80
+		jmp bump80
+			n80:
+			inc frequency[80]	
+		bump80:
+		cmp buffer,81
+		je n81
+		jmp bump81
+			n81:
+			inc frequency[81]	
+		bump81:
+		cmp buffer, 82
+		je n82
+		jmp bump82
+			n82:
+			inc frequency[82]	
+		bump82:
+		cmp buffer,83
+		je n83
+		jmp bump83
+			n83:
+			inc frequency[83]	
+		bump83:
+		cmp buffer, 84
+		je n84
+		jmp bump84
+			n84:
+			inc frequency[84]	
+		bump84:
+		cmp buffer,85
+		je n85
+		jmp bump85
+			n85:
+			inc frequency[85]	
+		bump85:
+		cmp buffer, 86
+		je n86
+		jmp bump86
+			n86:
+			inc frequency[86]	
+		bump86:
+		cmp buffer,87
+		je n87
+		jmp bump87
+			n87:
+			inc frequency[87]		
+		bump87:
+		cmp buffer,88
+		je n88
+		jmp bump88
+			n88:
+			inc frequency[88]	
+		bump88:
+		cmp buffer,89
+		je n89
+		jmp bump89
+			n89:
+			inc frequency[89]	
+		bump89:
+		cmp buffer, 90
+		je n90
+		jmp bump90
+			n90:
+			inc frequency[90]	
+		bump90:
+		cmp buffer, 91
+		je n91
+		jmp bump91
+			n91:
+			inc frequency[91]	
+		bump91:
+		cmp buffer,92
+		je n92
+		jmp bump92
+			n92:
+			inc frequency[92]	
+		bump92:
+		cmp buffer,93
+		je n93
+		jmp bump93
+			n93:
+			inc frequency[93]	
+		bump93:
+			cmp buffer, 94
+		je n94
+		jmp bump94
+			n94:
+			inc frequency[94]	
+		bump94:
+		cmp buffer,95
+		je n95
+		jmp bump95
+			n95:
+			inc frequency[95]	
+		bump95:
+		cmp buffer, 96
+		je n96
+		jmp bump96
+			n96:
+			inc frequency[96]	
+		bump96:
+		cmp buffer,97
+		je n97
+		jmp bump97
+			n97:
+			inc frequency[97]	
+		bump97:
+		cmp buffer, 98
+		je n98
+		jmp bump98
+			n98:
+			inc frequency[98]	
+		bump98:
+		cmp buffer,99
+		je n99
+		jmp bump99
+			n99:
+			inc frequency[99]	
+		bump99:
+		cmp buffer, 100
+		je n100
+		jmp bump100
+			n100:
+			inc frequency[100]	
+		bump100:
+		cmp buffer,101
+		je n101
+		jmp bump101
+			n101:
+			inc frequency[101]	
+		bump101:
+		cmp buffer, 102
+		je n102
+		jmp bump102
+			n102:
+			inc frequency[102]	
+		bump102:
+		cmp buffer,103
+		je n103
+		jmp bump103
+			n103:
+			inc frequency[103]	
+		bump103:
+		cmp buffer, 104
+		je n104
+		jmp bump104
+			n104:
+			inc frequency[104]	
+		bump104:
+		cmp buffer,105
+		je n105
+		jmp bump105
+			n105:
+			inc frequency[105]	
+		bump105:
+		cmp buffer,106
+		je n106
+		jmp bump106
+			n106:
+			inc frequency[106]	
+		bump106:
+		cmp buffer,107
+		je n107
+		jmp bump107
+			n107:
+			inc frequency[107]	
+		bump107:
+		cmp buffer, 108
+		je n108
+		jmp bump108
+			n108:
+			inc frequency[108]	
+		bump108:
+		cmp buffer,109
+		je n109
+		jmp bump109
+			n109:
+			inc frequency[109]	
+		bump109:
+		cmp buffer, 110
+		je n110
+		jmp bump110
+			n110:
+			inc frequency[110]	
+		bump110:
+		cmp buffer,111
+		je n111
+		jmp bump111
+			n111:
+			inc frequency[111]	
+		bump111:
+		cmp buffer, 112
+		je n112
+		jmp bump112
+			n112:
+			inc frequency[112]	
+		bump112:
+		cmp buffer,113
+		je n113
+		jmp bump113
+			n113:
+			inc frequency[113]	
+		bump113:
+		cmp buffer, 114
+		je n114
+		jmp bump114
+			n114:
+			inc frequency[114]	
+		bump114:
+		cmp buffer,115
+		je n115
+		jmp bump115
+			n115:
+			inc frequency[115]	
+		bump115:
+		cmp buffer, 116
+		je n116
+		jmp bump116
+			n116:
+			inc frequency[116]	
+		bump116:
+		cmp buffer,117
+		je n117
+		jmp bump117
+			n117:
+			inc frequency[117]	
+		bump117:
+		cmp buffer, 118
+		je n118
+		jmp bump118
+			n118:
+			inc frequency[118]	
+		bump118:
+		cmp buffer,119
+		je n119
+		jmp bump119
+			n119:
+			inc frequency[119]		
+		bump119:
+		cmp buffer,120
+		je n120
+		jmp 	bump120
+		n120:
+			inc frequency[120]	
+		bump120:
+		cmp 	buffer,121
+		je 	n121
+		jmp	bump121
+		n121:
+			inc frequency[121]	
+		bump121:
+		cmp 	buffer, 122
+		je 	n122
+		jmp 	bump122
+		n122:
+			inc frequency[122]	
+		bump122:
+		cmp 	buffer, 123
+		je 	n123
+		jmp 	bump123
+		n123:
+			inc frequency[123]	
+		bump123:
+		cmp 	buffer,124
+		je 	n124
+		jmp 	bump124
+		n124:
+			inc frequency[124]	
+		bump124:
+		cmp 	buffer,125
+		je 	n125
+		jmp 	bump125
+		n125:
+			inc frequency[125]	
+		bump125:
+		cmp 	buffer, 126
+		je 	n126
+		jmp 	bump126
+			n126:
+			inc frequency[126]	
+		bump126:
+		cmp 	buffer,127
+		je 	n127
+		jmp 	bump127
+		n127:
+			inc frequency[127]	
+		bump127:
+		
+		inc	sizecount
+		jmp 	frequencygrab
+
+	done:
+						;Write the first 128 elements frequency in the outFile 
+						;so that later it can be retrieved in decompression.
+						;Also the numbers are stored as 30h or higher so that
+						;it's easier to read it from the file.
+
+	mov 	di,0
+		write:
+						;Raising the numbers 30h higher
+		cmp	di,128
+		je	done1
+		mov	al,frequency[di]
+		mov	buffer,ax
+		add	buffer,48
+
+						;Copying the raised frequency to outFile
+		mov	ah,40h
+		mov	bx,outHandle
+		mov	dh,00
+		mov	dx,offset buffer
+		mov	cx,1
+		int	21h
+		jc	error
+		inc 	di
+		jmp	write	
+		
+	done1:
+
+
+
+						;This part of the code uses the frequency table to 
+						;set up the upkid,downkid and parent tables.
+	
+
+	Tables:
+						;Reset Values
+	mov 	min,1000
+	mov 	min2,1000
+	mov	ax,root
+	cmp	sizecount,ax
+	je	done4	
+
+	mov 	di,0
+						;Getting the Upkid
+	getUpKid:	
+		cmp 	di,512
+		je 	done2
+		mov 	ah,0
+		mov 	al,frequency[di]
+		cmp	ax,min
+		jbe	newmin
+		back1:
+		inc 	di
+		jmp 	getUpKid
+						;Setting the first minimum
+	newmin:
+		cmp	ax,0
+		je	back1
+		mov	safespot,di
+		mov	min,ax
+		jmp 	back1
+
+	done2:				
+						;Saving upkid/parent
+	
+	mov	di,safespot
+	mov	bl,frequency[di]
+	mov	root,bx
+	mov	ax,kidcount
+	mov	frequency[di],0
+	mov	parent[di],al
+	mov	di,kidcount
+	mov	ax,safespot
+	mov	upkid[di],al
+
+	mov 	di,0
+						;Getting the downkid
+	getDownKid:
+		cmp 	di,512
+		je 	done3
+		mov 	ah,0
+		mov 	al,frequency[di]
+		cmp	ax,min2
+		jbe	newmin2
+		back2:
+		inc 	di
+		jmp 	getDownKid
+						;Setting the second minimum
+	newmin2:
+		cmp	ax,0
+		je	back2
+		mov	safespot2,di
+		mov	min2,ax
+		jmp 	back2
+
+	done3:
+						;Saving downkid/parent
+	mov	di,safespot2
+	mov	bl,frequency[di]
+	add	root,bx
+	mov	ax,kidcount
+	mov	frequency[di],0
+	mov	parent[di],al
+	mov	di,kidcount
+	mov	ax,safespot2
+	mov	downkid[di],al
+						;Saving the root
+	mov	ax,root
+	mov	di,kidcount
+	mov	frequency[di],al
+	inc	kidcount
+
+	cmp	ax,sizecount
+	je	rootplacesavejmp
+	back3:
+
+	
+	jmp Tables
+						;Save the root's place in frequency table
+						;used to compare later.
+	rootplacesavejmp:
+	mov	rootplacesave,di
+	jmp	back3
+
+	done4:
+						;Close inFile to reset the Handle
+	mov	ah,3fh
+	mov	bx,inHandle
+	int	21h
+
+	
+						;Reopen the inFile to go back to the start of the file.
+	mov	ax,3d02h
+	lea	dx,inName
+	int	21h
+	jc	error
+	mov	inHandle,ax
+
+						;This part of the program is used create the Huffman tree
+						;as well as to save the newly translated data in the outFile
+						;in the same fashion that the frequency table was saved.
+						;All the numbers are raised by 30h so that the Huffman translation
+						;represented by 1's and 0's
+		
+
+						;Reseting variables, and arrays used to mirror the Huffman translation
+						;of each letter.
+		Huffman:
+		mov 	di,0
+		mov 	cx,256
+		mov 	stringcount,0
+		mov 	stringsavespace,0
+	
+						;Fills String arrays with 2's so that the program knows when to stop copying.
+		Stringloop:
+
+		mov 	stringsave[di],2
+		inc	di
+		loop	Stringloop
+
+		mov 	di,0
+		mov 	cx,256
+
+		Stringloop2:
+		mov 	stringinverse[di],2
+		inc	di
+		loop	Stringloop2
+						;Reading character by character from the inFile
+		mov	ah,3fh
+		mov	bx,inHandle
+		mov	cx,1
+		mov	dx,offset buffer
+		int	21h
+		jc	error
+
+		cmp	ax,0
+		je	done5	
+						;Creates the first nodes 
+	
+		mov 	di,0
+		mov	branch,0
+		mov	branchsave,0
+		mov	ax,buffer
+		
+						;Checks if the node starts as a upNode or downNode			
+		check:
+		mov	ax,buffer
+		cmp	downkid[di],al
+		je	down
+		cmp	upkid[di],al
+		je	up
+		inc	di
+		jmp	check
+						;Fills String arrays with 2's so that the program knows when to stop copying.
+						;Get Value of node/Set direction/set up string
+						;After we determine if the node is up or down one of these functions
+						;will set save the value of the node (ex. 'a' = 97), will save 
+						;where the node was found (di = n), which is gonna be used to
+						;as the next value we search for in upkid and downkid arrays.
+						;And lastly it will save either a 0 or a 1 to string array,
+						;the string will be mirrored from what we want and a later 
+						;function inverses it.
+				
+		up:
+		mov branch,0
+		mov branchsave,di
+		mov di,stringcount
+		mov stringsave[di],0
+		inc stringcount
+		jmp nodeGotten
+
+		down:
+		mov branch,1
+		mov branchsave,di
+		mov di,stringcount
+		mov stringsave[di],1
+		inc stringcount
+		jmp nodeGotten
+		
+
+		nodeGotten:		
+						
+		mov	ax,rootplacesave
+		cmp	branchsave,ax
+		je	done6
+
+		mov	ax,branchsave
+						;After the inital node is found this is the way we're going 
+						;to find the following nodes, getting the nth node.
+		nth:
+		inc	di
+		cmp	downkid[di],al
+		je	down
+		cmp	upkid[di],al
+		je	up
+
+		jmp	nth
+
+		done6:
+						;This is where we invert the string, so it's as if we traced it
+						;from the root and not the node. The array counts down and if the saved value
+						;is either 1 or 0 it will be put in the front of the new string. However, if 
+						;the value is 2 it will just move on. 
+
+		mov di,255
+		mov bx,0
+		inverse:
+			cmp stringsave[di],0
+			je  invrsezero
+			cmp stringsave[di],1
+			je  invresone
+			back4:
+			cmp di,0
+			je done7
+			dec di
+		jmp inverse
+
+ 						;This will place a 0 at bx of the string
+		invrsezero:
+		mov stringinverse[bx],0
+		inc bx
+		inc stringsavespace
+		jmp back4
+						;This will place a 1 at bx of the string
+		invresone:
+		mov stringinverse[bx],1
+		inc bx
+		inc stringsavespace
+		jmp back4
+
+		done7:
+
+						;Here we raise the numbers to be displayed as 1's and 0's
+						;and after we raise them we save them in the outFile starting
+						;at 129th spot right after the frequnecy. When we unpack we will
+						;recover the file starting at 129.
+
+		
+		mov 	di,0
+		write1:
+		cmp	di,stringsavespace
+		je	done8
+		mov	al,stringinverse[di]
+		mov	buffer,ax
+		add	buffer,48
+
+						;This is where we copy the Huffman translation into the outFile.
+		mov	ah,40h
+		mov	bx,outHandle
+		mov	dh,00
+		mov	dx,offset buffer
+		mov	cx,1
+		int	21h
+		jc	error
+		inc 	di
+		jmp	write1	
+		
+		done8:
+		jmp	Huffman
+		done5:
+
+		
+						;We close both the inFile and the outFile
+		mov  	ah, 3fh          
+ 	 	mov  	bx, outHandle
+ 		mov 	cx, 1           
+ 		mov 	dx,offset buffer 
+ 	 	int 	21h 	
+		mov	ah,3fh
+		mov	bx,inHandle
+		int	21h
+		
+	error:
+						;This is where I create two loops, one for upkid and another for downkid
+						;the will print out 256 elements of the upkid and downkid arrays starting at 256 and will.
+						;Using this it is really simple to create a physical table and then make a tree and double
+						;check if the translation is correct.
+
+	mov ax,0b800h
+	mov es,ax 
+	mov cx, 256
+	mov dh, 17h
+	mov si,256
+	mov di,0
+	upKidPrint:
+		mov dl, upkid[si]
+		mov dh, 17h
+		mov es:[di],dx
+		inc di
+		inc di
+		inc si
+		loop upKidPrint
+
+	mov cx, 256
+	mov dh, 17h
+	mov si,256
+	mov di,640
+	downKidPrint:
+		mov dl, downkid[si]
+		mov dh, 17h
+		mov es:[di],dx
+		inc di
+		inc di
+		inc si
+		loop downKidPrint	
+
+						;We end the program
+	mov	ax,4c00h		
+	int	21h
+
+end
