@@ -1,2 +1,2 @@
 # Compressor 8 Bit DOS
-
+This program was made for the Assembly Languge, CSC 21000 class. This program is a compression program, it will read the inFile and based on what's in the inFile it will create an appropriate frequency table which will be used to create a Huffman tree. The tree will be used to translate what's in the inFile to the Outfile as binary code. This version is the visual version of the compression program which will display the upkid and downkid so that one can manually create the tables and tree on paper and decode what the binary code says. 
